@@ -39,6 +39,9 @@ private final String keyError="error";
     private final String statusEnabled="enabled";
     private final String statusDisabled="disabled";
 
+     private final String keyName = "name";
+  private final String keyAddress = "address";
+
     //Error Messages
 //Initialization
     private final String logNotEnabled="Bluetooth not enabled";
@@ -69,8 +72,8 @@ private final String keyError="error";
             this.initialize(callbackContext);
             return true;
         }else if(action.equals("showpairedDevice")){
-         this.showpairDevice(callbackContext);
-            return true
+         this.showpairedDevice(callbackContext);
+            return true;
         }
         return false;
     }
@@ -114,13 +117,13 @@ private final String keyError="error";
 
        if (!btAdapter.isEnabled()) {                                  //Enable bluetooth if not enables already
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                cordova.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
             else{                                                          //If already enabled display list of paired devices
 
                  JSONArray returnArray = new JSONArray();
 
-    Set<BluetoothDevice> devices = bluetoothAdapter.getBondedDevices();
+    Set<BluetoothDevice> devices = btAdapter.getBondedDevices();
     for (BluetoothDevice device : devices) {
     JSONObject returnObj = new JSONObject();
 
