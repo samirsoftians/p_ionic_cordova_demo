@@ -59,7 +59,7 @@ private final String keyError="error";
        private final String errorConnect = "connect";
        private final String logNoArgObj = "Argument object not found";
         private final String logNoAddress = "No device address";
-         private final String keyAddress = "address";
+        
 
     //General CallbackContext
     private CallbackContext initCallbackContext;
@@ -257,7 +257,7 @@ private void showpairedDevice(CallbackContext callbackContext) {
         
   }
 
-   private void pairDevice(){
+   private void pairDevice(BluetoothDevice device){
         try {
             Method method = device.getClass().getMethod("createBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
@@ -267,7 +267,7 @@ private void showpairedDevice(CallbackContext callbackContext) {
         
   }
 
-  private void unpairDevice(){
+  private void unpairDevice(BluetoothDevice device){
            try {
             Method method = device.getClass().getMethod("removeBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
@@ -356,6 +356,22 @@ private void showpairedDevice(CallbackContext callbackContext) {
     return false;
   }
 
+    private String getAddress(JSONObject obj) {
+    //Get the address string from arguments
+    String address = obj.optString(keyAddress, null);
+
+    if (address == null) {
+      return null;
+    }
+
+    //Validate address format
+    if (!BluetoothAdapter.checkBluetoothAddress(address)) {
+      return null;
+    }
+
+    return address;
+  }
+
 
    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
 	    public void onReceive(Context context, Intent intent) {
@@ -384,7 +400,7 @@ private void showpairedDevice(CallbackContext callbackContext) {
       
       addProperty(errorObj, keyMessage, unpairStatus);
 
-      callbackContext.error(errorObj);
+      broadcastCallback.error(errorObj);
 	        	 }
 	        	 
 	        	
