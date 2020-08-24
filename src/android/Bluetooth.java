@@ -56,11 +56,21 @@ private final String keyError="error";
 
     private BluetoothAdapter btAdapter; 
 
+    public BluetoothLePlugin() {
+
+    btAdapter = BluetoothAdapter.getDefaultAdapter();
+
+
+    }
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
        if (action.equals("initialize")) {
             this.initialize(callbackContext);
             return true;
+        }else if(action.equals("showpairedDevice")){
+         this.showpairDevice(callbackContext);
+            return true
         }
         return false;
     }
@@ -97,6 +107,39 @@ private final String keyError="error";
 
     }
 
+
+    // code for show pair devices
+    
+  private void showpairedDevice(CallbackContext callbackContext) {
+
+       if (!btAdapter.isEnabled()) {                                  //Enable bluetooth if not enables already
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
+            else{                                                          //If already enabled display list of paired devices
+
+                 JSONArray returnArray = new JSONArray();
+
+    Set<BluetoothDevice> devices = bluetoothAdapter.getBondedDevices();
+    for (BluetoothDevice device : devices) {
+    JSONObject returnObj = new JSONObject();
+
+      addDevice(returnObj, device);
+
+      returnArray.put(returnObj);
+    }
+
+    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnArray);
+    pluginResult.setKeepCallback(true);
+    callbackContext.sendPluginResult(pluginResult);
+      }
+
+            }
+
+       
+
+    }
+
       @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
@@ -118,7 +161,7 @@ private final String keyError="error";
 
                 //If user has enabled bluetooth, show list of paired devices
 
-            
+         
 
         }
 
@@ -137,6 +180,11 @@ private final String keyError="error";
         } catch (JSONException e) {
         }
     }
+
+    private void addDevice(JSONObject returnObj, BluetoothDevice device) {
+    addProperty(returnObj, keyAddress, device.getAddress());
+    addProperty(returnObj, keyName, device.getName());
+  }
      public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
         //if (permissionsCallback == null) {
         //  return;

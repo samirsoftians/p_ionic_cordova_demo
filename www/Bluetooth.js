@@ -6,4 +6,9 @@ module.exports.initialize = function(arg0,success,error){
 
 };
 
+module.exports.initialize = function(arg0,success,error){
+ exec(success, error, 'Bluetooth', 'showpairedDevice', []);
+
+};
+
 
