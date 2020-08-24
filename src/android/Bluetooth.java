@@ -20,6 +20,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Build;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 
 import java.util.ArrayList;
 import java.util.Arrays;
