@@ -16,4 +16,9 @@ module.exports.findBluetoothDevice = function(arg0,success,error){
 
 };
 
+module.exports.pairDevice = function(arg0,success,error){
+ exec(success, error, 'Bluetooth', 'pairDevice', [arg0]);
+
+};
+
 

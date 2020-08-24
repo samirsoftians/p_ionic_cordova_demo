@@ -29,6 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import java.lang.reflect.Method;
 /**
  * This class echoes a string called from JavaScript.
  */
@@ -40,6 +42,8 @@ private final String keyError="error";
 
     private final String statusEnabled="enabled";
     private final String statusDisabled="disabled";
+    private final String pairStatus="paired";
+    private final String unpairStatus="unpair";
 
      private final String keyName = "name";
   private final String keyAddress = "address";
@@ -51,10 +55,17 @@ private final String keyError="error";
     private final String logNotInit="Bluetooth not initialized";
     private final String logOperationUnsupported="Operation unsupported";
 
+      private final String errorArguments = "arguments";
+       private final String errorConnect = "connect";
+       private final String logNoArgObj = "Argument object not found";
+        private final String logNoAddress = "No device address";
+         private final String keyAddress = "address";
+
     //General CallbackContext
     private CallbackContext initCallbackContext;
     private CallbackContext permissionsCallback;
     private CallbackContext broadcastCallback;
+    private CallbackContext bondBroadcastCallback;
 
     private static final int REQUEST_ENABLE_BT = 1;                                //Enable bluetooth request variable
     private static final int REQUEST_DISCOVERABILITY = 1;                  //Make bluetooth discoverable request variable
@@ -79,6 +90,9 @@ private final String keyError="error";
             return true;
         }else if(action.equals("findBluetoothDevice")){
          this.findBluetoothDevice(callbackContext);
+            return true;
+        }else if(action.equals("pairDevice")){
+         this.pairDeviceAction(args,callbackContext);
             return true;
         }
         return false;
@@ -162,6 +176,33 @@ private void showpairedDevice(CallbackContext callbackContext) {
 
 
             }
+            //for pairing device
+             private void pairDeviceAction(JSONArray args,CallbackContext callbackContext) {
+             bondBroadcastCallback = callbackContext;
+              JSONObject obj = getArgsObject(args);
+    if (isNotArgsObject(obj, callbackContext)) {
+      return;
+    }
+
+    String address = getAddress(obj);
+    if (isNotAddress(address, callbackContext)) {
+      return;
+    }
+    BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
+
+    if (device.getBondState() == BluetoothDevice.BOND_BONDED) {
+					unpairDevice(device);
+				} else {
+				
+					
+					pairDevice(device);
+				}
+
+                cordova.getActivity().registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)); 
+			
+
+
+             }
 
       @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -215,6 +256,27 @@ private void showpairedDevice(CallbackContext callbackContext) {
          cordova.startActivityForResult(this, discoverableIntent, REQUEST_DISCOVERABILITY);
         
   }
+
+   private void pairDevice(){
+        try {
+            Method method = device.getClass().getMethod("createBond", (Class[]) null);
+            method.invoke(device, (Object[]) null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+  }
+
+  private void unpairDevice(){
+           try {
+            Method method = device.getClass().getMethod("removeBond", (Class[]) null);
+            method.invoke(device, (Object[]) null);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+  }
      public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
         //if (permissionsCallback == null) {
         //  return;
@@ -253,6 +315,82 @@ private void showpairedDevice(CallbackContext callbackContext) {
             }
         }
     };
+    //extract json data
+      private JSONObject getArgsObject(JSONArray args) {
+    if (args.length() == 1) {
+      try {
+        return args.getJSONObject(0);
+      } catch (JSONException ex) {
+      }
+    }
+
+    return null;
+  }
+
+   private boolean isNotArgsObject(JSONObject obj, CallbackContext callbackContext) {
+    if (obj != null) {
+      return false;
+    }
+
+    JSONObject returnObj = new JSONObject();
+
+    addProperty(returnObj, keyError, errorArguments);
+    addProperty(returnObj, keyMessage, logNoArgObj);
+
+    callbackContext.error(returnObj);
+
+    return true;
+  }
+
+    private boolean isNotAddress(String address, CallbackContext callbackContext) {
+    if (address == null) {
+      JSONObject returnObj = new JSONObject();
+
+      addProperty(returnObj, keyError, errorConnect);
+      addProperty(returnObj, keyMessage, logNoAddress);
+
+      callbackContext.error(returnObj);
+      return true;
+    }
+
+    return false;
+  }
+
+
+   private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
+	    public void onReceive(Context context, Intent intent) {
+	        String action = intent.getAction();
+	        
+	        if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {	        	
+	        	 final int state 		= intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+	        	 final int prevState	= intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+	        	 
+	        	 if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                  if(broadcastCallback!=null){
+                  JSONObject returnObj = new JSONObject();
+
+                    addProperty(returnObj, keyStatus, pairStatus);
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
+                    pluginResult.setKeepCallback(true);
+                    broadcastCallback.sendPluginResult(pluginResult);
+
+
+                  }
+	        		// showToast("Paired");
+	        	 } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED){
+	        		 //showToast("Unpaired");
+                      JSONObject errorObj = new JSONObject();
+
+      
+      addProperty(errorObj, keyMessage, unpairStatus);
+
+      callbackContext.error(errorObj);
+	        	 }
+	        	 
+	        	
+	        }
+	    }
+	};
 
       @Override
   public void onDestroy() {
