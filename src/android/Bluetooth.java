@@ -59,7 +59,7 @@ private final String keyError="error";
 
     private BluetoothAdapter btAdapter; 
 
-    public BluetoothLePlugin() {
+    public Bluetooth() {
 
     btAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -112,12 +112,11 @@ private final String keyError="error";
 
 
     // code for show pair devices
-    
-  private void showpairedDevice(CallbackContext callbackContext) {
+private void showpairedDevice(CallbackContext callbackContext) {
 
        if (!btAdapter.isEnabled()) {                                  //Enable bluetooth if not enables already
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                cordova.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+           Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+           cordova.startActivityForResult(this, enableBtIntent, REQUEST_ENABLE_BT);
             }
             else{                                                          //If already enabled display list of paired devices
 
@@ -138,10 +137,6 @@ private final String keyError="error";
       }
 
             }
-
-       
-
-    }
 
       @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
