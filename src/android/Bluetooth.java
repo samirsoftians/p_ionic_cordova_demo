@@ -19,7 +19,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Build;
-
+import android.content.BroadcastReceiver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,6 +53,7 @@ private final String keyError="error";
     //General CallbackContext
     private CallbackContext initCallbackContext;
     private CallbackContext permissionsCallback;
+    private CallbackContext broadcastCallback;
 
     private static final int REQUEST_ENABLE_BT = 1;                                //Enable bluetooth request variable
     private static final int REQUEST_DISCOVERABILITY = 1;                  //Make bluetooth discoverable request variable
@@ -143,6 +144,7 @@ private void showpairedDevice(CallbackContext callbackContext) {
             }
 
             private void findBluetoothDevice(CallbackContext callbackContext) {
+              broadcastCallback = callbackContext;
             discoverOn();
              Activity activity = cordova.getActivity();
 
@@ -234,18 +236,16 @@ private void showpairedDevice(CallbackContext callbackContext) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
 
-                     JSONArray returnArray = new JSONArray();
-    for (BluetoothDevice device : devices) {
-    JSONObject returnObj = new JSONObject();
+            BluetoothDevice devicedata = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-      addDevice(returnObj, device);
 
-      returnArray.put(returnObj);
-    }
+                JSONObject returnObj = new JSONObject();
 
-    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnArray);
-    pluginResult.setKeepCallback(true);
-    callbackContext.sendPluginResult(pluginResult);
+                addDevice(returnObj, devicedata);
+
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
+                pluginResult.setKeepCallback(true);
+                broadcastCallback.sendPluginResult(pluginResult);
 
               //  Log.i("findnewdevice44",""+device.getName());
 
