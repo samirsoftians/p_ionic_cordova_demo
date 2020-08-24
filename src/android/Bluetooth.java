@@ -9,6 +9,7 @@ import android.Manifest;
 import android.app.Activity;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import android.content.IntentFilter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,6 +75,9 @@ private final String keyError="error";
         }else if(action.equals("showpairedDevice")){
          this.showpairedDevice(callbackContext);
             return true;
+        }else if(action.equals("findBluetoothDevice")){
+         this.findBluetoothDevice(callbackContext);
+            return true;
         }
         return false;
     }
@@ -138,6 +142,24 @@ private void showpairedDevice(CallbackContext callbackContext) {
 
             }
 
+            private void findBluetoothDevice(CallbackContext callbackContext) {
+            discoverOn();
+             Activity activity = cordova.getActivity();
+
+
+            if (btAdapter.isDiscovering()) {
+            //Bluetooth is already in mode discovery mode, we cancel to restart it again
+            btAdapter.cancelDiscovery();
+        }
+
+        btAdapter.startDiscovery();
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+         activity.registerReceiver(receiver,filter);
+        
+
+
+            }
+
       @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
@@ -183,6 +205,13 @@ private void showpairedDevice(CallbackContext callbackContext) {
     addProperty(returnObj, keyAddress, device.getAddress());
     addProperty(returnObj, keyName, device.getName());
   }
+  private void discoverOn(){
+        Intent discoverableIntent =
+                new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+         cordova.startActivityForResult(this, discoverableIntent, REQUEST_DISCOVERABILITY);
+        
+  }
      public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
         //if (permissionsCallback == null) {
         //  return;
@@ -194,5 +223,40 @@ private void showpairedDevice(CallbackContext callbackContext) {
         // addProperty(returnObj, "requestPermission", cordova.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION));
 
         //permissionsCallback.success(returnObj);
+    }
+
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                //Discovery has found a device. Get the BluetoothDevice
+                //object and its info from the Intent.
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+
+                     JSONArray returnArray = new JSONArray();
+    for (BluetoothDevice device : devices) {
+    JSONObject returnObj = new JSONObject();
+
+      addDevice(returnObj, device);
+
+      returnArray.put(returnObj);
+    }
+
+    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnArray);
+    pluginResult.setKeepCallback(true);
+    callbackContext.sendPluginResult(pluginResult);
+
+              //  Log.i("findnewdevice44",""+device.getName());
+
+            }
+        }
+    };
+
+      @Override
+  public void onDestroy() {
+    super.onDestroy();
+    cordova.getActivity().unregisterReceiver(receiver);
+
     }
 }
