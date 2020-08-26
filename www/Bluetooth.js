@@ -21,5 +21,10 @@ module.exports.pairDevice = function(arg0,success,error){
 
 };
 
+module.exports.disconnectBle = function(arg0,success,error){
+    exec(success, error, 'Bluetooth', 'disconnectBle', []);
+   
+   };
+
 
 
